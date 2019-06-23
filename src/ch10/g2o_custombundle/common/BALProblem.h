@@ -40,7 +40,7 @@ public:
     const double* cameras()             const{ return parameters_;               }
     const double* points()              const{ return parameters_ + camera_block_size() * num_cameras_; }
     double* mutable_cameras()                { return parameters_;               }
-    double* mutable_points()                 { return parameters_ + camera_block_size() * num_cameras_; }
+    double* mutable_points()                 { return parameters_ + camera_block_size() * num_cameras_; }    // 三维点云数据在内存位置中偏移量
 
     double* mutable_camera_for_observation(int i){
         return mutable_cameras() + camera_index_[i] * camera_block_size();

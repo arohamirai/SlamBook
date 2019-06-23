@@ -31,4 +31,11 @@ int main(int argc, char** argv)
 
     Eigen::Vector3f posInRobot2 = T2 * Eigen::inverse(T1)*posInRobot1;
     cout<<"posInRobot2:\n"<<posInRobot2<<endl;
+
+    Eigen::AngleAxisd rotation_vector ( M_PI/4, Eigen::Vector3d ( 0,0,1 ) );     //沿 Z 轴旋转 45 度
+    cout .precision(3);         //打印精度
+
+    // 1.0 旋转向量————> 旋转矩阵
+    //用matrix()转换成矩阵
+    cout<<"rotation matrix =\n"<<rotation_vector.matrix() <<endl;
 }

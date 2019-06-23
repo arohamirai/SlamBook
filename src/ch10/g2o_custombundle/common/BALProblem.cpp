@@ -54,10 +54,14 @@ BALProblem::BALProblem(const std::string& filename, bool use_quaternions){
             << " " << num_points_
             << " " << num_observations_;
 
+  // 观测点索引
   point_index_ = new int[num_observations_];
+  // 相机位姿索引（不是同一个相机的不同位姿，是不同相机从不同位姿的观测）
   camera_index_ = new int[num_observations_];
+  // 观测数据索引（像素坐标）
   observations_ = new double[2 * num_observations_];
 
+  // 总的参数=相机参数：焦距f、畸变k1、k2,相机位姿（6） + 观测点位姿（3)
   num_parameters_ = 9 * num_cameras_ + 3 * num_points_;
   parameters_ = new double[num_parameters_];
 
@@ -69,6 +73,7 @@ BALProblem::BALProblem(const std::string& filename, bool use_quaternions){
     }
   }
 
+  // 初始猜测（文件中参数排列：相机0参数、相机1参数...相机n参数，点0参数,点1参数....点n参数）
   for (int i = 0; i < num_parameters_; ++i) {
     FscanfOrDie(fptr, "%lf", parameters_ + i);
   }
@@ -83,6 +88,7 @@ BALProblem::BALProblem(const std::string& filename, bool use_quaternions){
     double* original_cursor = parameters_;
     double* quaternion_cursor = quaternion_parameters;
     for (int i = 0; i < num_cameras_; ++i) {
+        // 轴角到四元数（Eigen中可以直接转）
       AngleAxisToQuaternion(original_cursor, quaternion_cursor);
       quaternion_cursor += 4;
       original_cursor += 3;
@@ -222,29 +228,34 @@ void BALProblem::Normalize(){
   // Compute the marginal median of the geometry
   std::vector<double> tmp(num_points_);
   Eigen::Vector3d median;
+  // 点云在内存中的起始位置
   double* points = mutable_points();
   for(int i = 0; i < 3; ++i){
     for(int j = 0; j < num_points_; ++j){
       tmp[j] = points[3 * j + i];      
     }
+    // 观测点坐标的中位数
     median(i) = Median(&tmp);
   }
 
   for(int i = 0; i < num_points_; ++i){
     VectorRef point(points + 3 * i, 3);
+    // 可以认为离原点（中位点）的远近（L1范数：向量元素的绝对值之和）
     tmp[i] = (point - median).lpNorm<1>();
   }
 
+  // 离原点远近的中位数
   const double median_absolute_deviation = Median(&tmp);
 
   // Scale so that the median absolute deviation of the resulting
   // reconstruction is 100
-
+  // 缩放到100的距离上
   const double scale = 100.0 / median_absolute_deviation;
 
   // X = scale * (X - median)
   for(int i = 0; i < num_points_; ++i){
     VectorRef point(points + 3 * i, 3);
+    // 点云原点平移median距离
     point = scale * (point - median);
   }
 
