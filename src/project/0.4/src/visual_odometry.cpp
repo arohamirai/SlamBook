@@ -319,18 +319,20 @@ void VisualOdometry::optimizeMap()
     // remove the hardly seen and no visible points 
     for ( auto iter = map_->map_points_.begin(); iter != map_->map_points_.end(); )
     {
+         // 不在视野内
         if ( !curr_->isInFrame(iter->second->pos_) )
         {
             iter = map_->map_points_.erase(iter);
             continue;
         }
+        // 匹配上次数/观测次数
         float match_ratio = float(iter->second->matched_times_)/iter->second->visible_times_;
         if ( match_ratio < map_point_erase_ratio_ )
         {
             iter = map_->map_points_.erase(iter);
             continue;
         }
-        
+        // 观测角度变化
         double angle = getViewAngle( curr_, iter->second );
         if ( angle > M_PI/6. )
         {

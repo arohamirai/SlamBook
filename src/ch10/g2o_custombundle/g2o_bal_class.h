@@ -102,22 +102,28 @@ public:
         // BaseBinaryEdge<2, Vector2d, VertexCameraBAL, VertexPointBAL>::linearizeOplus();
         // return;
         
+        //调用ceres的自动求导，因为g2o并没有自动求倒，并且数值求导较慢
         // using autodiff from ceres. Otherwise, the system will use g2o numerical diff for Jacobians
 
         const VertexCameraBAL* cam = static_cast<const VertexCameraBAL*> ( vertex ( 0 ) );
         const VertexPointBAL* point = static_cast<const VertexPointBAL*> ( vertex ( 1 ) );
-        typedef ceres::internal::AutoDiff<EdgeObservationBAL, double, VertexCameraBAL::Dimension, VertexPointBAL::Dimension> BalAutoDiff;
 
+        // 拟函数类型，数值类型，传给拟函数的数据N0维度，传给拟函数的数据N1维度,...传给拟函数的数据N9维度
+        typedef ceres::internal::AutoDiff<EdgeObservationBAL, double, VertexCameraBAL::Dimension, VertexPointBAL::Dimension> BalAutoDiff;
+        // 定义jacobian的接收变量
         Eigen::Matrix<double, Dimension, VertexCameraBAL::Dimension, Eigen::RowMajor> dError_dCamera;
         Eigen::Matrix<double, Dimension, VertexPointBAL::Dimension, Eigen::RowMajor> dError_dPoint;
         double *parameters[] = { const_cast<double*> ( cam->estimate().data() ), const_cast<double*> ( point->estimate().data() ) };
         double *jacobians[] = { dError_dCamera.data(), dError_dPoint.data() };
         double value[Dimension];
+        // 拟函数, 传入参数，输出维度，输出接收变量，jacobian
+        // value的意思是指误差(residuals)
         bool diffState = BalAutoDiff::Differentiate ( *this, parameters, Dimension, value, jacobians );
 
         // copy over the Jacobians (convert row-major -> column-major)
         if ( diffState )
         {
+            // 二元边的jacobian存储格式
             _jacobianOplusXi = dError_dCamera;
             _jacobianOplusXj = dError_dPoint;
         }

@@ -206,6 +206,7 @@ void SetSolverOptionsFromFlags(BALProblem* bal_problem, const BundleParams& para
 
 void SolveProblem(const char* filename, const BundleParams& params)
 {
+    // 构造函数读数据
     BALProblem bal_problem(filename);
 
     // show some information here ...
@@ -215,6 +216,7 @@ void SolveProblem(const char* filename, const BundleParams& params)
     std::cout << "Forming " << bal_problem.num_observations() << " observatoins. " << std::endl;
 
     // store the initial 3D cloud points and camera pose..
+    // 给了名字的话，就保存初始点云
     if(!params.initial_ply.empty()){
         bal_problem.WriteToPLYFile(params.initial_ply);
     }
@@ -223,7 +225,9 @@ void SolveProblem(const char* filename, const BundleParams& params)
     
     // add some noise for the intial value
     srand(params.random_seed);
+    // 将点云规范化到一定范围，便于显示（并不影响优化结果，因为是各方向同时缩放）
     bal_problem.Normalize();
+    // 添加噪声
     bal_problem.Perturb(params.rotation_sigma, params.translation_sigma,
                         params.point_sigma);
 
